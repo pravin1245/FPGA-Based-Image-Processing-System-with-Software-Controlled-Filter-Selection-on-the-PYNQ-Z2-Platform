@@ -164,7 +164,7 @@ The system uses AXI-based IP cores and custom image-processing hardware to trans
 | 8 | AXI GPIO | Transfers software filter-selection and control signals. |
 | 9 | AXI4-Stream FIFO | Temporarily buffers the processed pixel stream. |
 | 10 | Output Selection / Gating Logic | Selects the processing result that continues to the output path. |
-| 11 | AXI Interconnect or SmartConnect, if used | Connects AXI master and slave interfaces. |
+| 11 | AXI SmartConnect| Connects AXI master and slave interfaces. |
 | 12 | Processor System Reset, if used | Provides reset signals for the Processing System and Programmable Logic. |
 
 
