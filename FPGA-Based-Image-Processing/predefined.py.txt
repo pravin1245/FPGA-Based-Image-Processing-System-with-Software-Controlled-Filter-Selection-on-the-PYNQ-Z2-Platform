@@ -1,0 +1,314 @@
+from pynq import Overlay, allocate
+from PIL import Image
+import numpy as np
+import matplotlib.pyplot as plt
+
+overlay = Overlay("Image_processing_system.bit")
+
+dma_input = overlay.axi_dma_4
+dma_sobel = overlay.axi_dma_1
+dma_laplacian = overlay.axi_dma_2
+dma_canny = overlay.axi_dma_3
+
+gpio = overlay.axi_gpio_0
+
+WIDTH = 256
+HEIGHT = 256
+SIZE = WIDTH * HEIGHT
+
+input_buffer = allocate(
+    shape=(SIZE,),
+    dtype=np.uint8
+)
+
+output_buffer = allocate(
+    shape=(SIZE,),
+    dtype=np.uint8
+)
+
+gpio.write(0x00, 0x00)
+
+input_img = None
+
+
+def input_image(filename):
+
+    global input_img
+
+    input_img = Image.open(filename).convert("RGB")
+    input_img = input_img.resize((WIDTH, HEIGHT))
+
+    gray = input_img.convert("L")
+
+    data = np.array(
+        gray,
+        dtype=np.uint8
+    )
+
+    input_buffer[:] = data.reshape(-1)
+
+    input_buffer.flush()
+
+
+def show_result(title, data):
+
+    output_img = np.array(
+        data,
+        dtype=np.uint8
+    ).reshape((HEIGHT, WIDTH))
+
+    plt.figure(figsize=(12, 5))
+
+    plt.subplot(1, 2, 1)
+
+    plt.imshow(input_img)
+
+    plt.title("INPUT IMAGE - 256 x 256")
+
+    plt.axis("off")
+
+    plt.subplot(1, 2, 2)
+
+    plt.imshow(
+        output_img,
+        cmap="gray"
+    )
+
+    plt.title(
+        title + " - 256 x 256"
+    )
+
+    plt.axis("off")
+
+    plt.tight_layout()
+
+    plt.show()
+
+
+def show_theory():
+
+    print()
+    print("==============================================")
+    print("             IMPORTANT CONCEPTS")
+    print("==============================================")
+
+    print("• RGB image is converted to 8-bit grayscale for FPGA processing.")
+
+    print("• Image size = 256 x 256 = 65536 pixels.")
+
+    print("• AXI DMA transfers image data between memory and FPGA.")
+
+    print("• AXI4-Stream carries pixel data through the processing hardware.")
+
+    print("• AXI GPIO selects the required filter.")
+
+    print("• Gaussian  = 0x01  -> Smoothing")
+
+    print("• Sobel     = 0x02  -> Edge detection")
+
+    print("• Laplacian = 0x04  -> Edge detection")
+
+    print("• Canny     = 0x08  -> Edge detection")
+
+    print("• Output is returned to memory and displayed in Jupyter.")
+
+    print()
+    print("==============================================")
+    print("              FILTER CONTROL")
+    print("==============================================")
+
+    print("GPIO bit 0 -> Gaussian")
+
+    print("GPIO bit 1 -> Sobel")
+
+    print("GPIO bit 2 -> Laplacian")
+
+    print("GPIO bit 3 -> Canny")
+
+    print()
+    print("==============================================")
+    print("              DMA CONFIGURATION")
+    print("==============================================")
+
+    print("axi_dma_4 -> Input + Gaussian")
+
+    print("axi_dma_1 -> Sobel output")
+
+    print("axi_dma_2 -> Laplacian output")
+
+    print("axi_dma_3 -> Canny output")
+
+    print()
+    print("==============================================")
+    print("           PROCESSING SEQUENCE")
+    print("==============================================")
+
+    print("1. User selects an input image.")
+
+    print("2. RGB image is converted to 8-bit grayscale.")
+
+    print("3. Image data is stored in the input buffer.")
+
+    print("4. AXI DMA transfers image data to the FPGA.")
+
+    print("5. AXI GPIO selects the required filter.")
+
+    print("6. Filter processes the image using AXI4-Stream.")
+
+    print("7. Processed image data is transferred back to memory.")
+
+    print("8. Output image is displayed in Jupyter.")
+
+    print("==============================================")
+
+
+def run_gaussian():
+
+    gpio.write(0x00, 0x01)
+
+    input_buffer.flush()
+
+    dma_input.recvchannel.transfer(
+        output_buffer
+    )
+
+    dma_input.sendchannel.transfer(
+        input_buffer
+    )
+
+    dma_input.sendchannel.wait()
+
+    dma_input.recvchannel.wait()
+
+    output_buffer.invalidate()
+
+    show_result(
+        "GAUSSIAN OUTPUT",
+        output_buffer
+    )
+
+    show_theory()
+
+
+def run_sobel():
+
+    gpio.write(0x00, 0x02)
+
+    input_buffer.flush()
+
+    dma_sobel.recvchannel.transfer(
+        output_buffer
+    )
+
+    dma_input.sendchannel.transfer(
+        input_buffer
+    )
+
+    dma_input.sendchannel.wait()
+
+    dma_sobel.recvchannel.wait()
+
+    output_buffer.invalidate()
+
+    show_result(
+        "SOBEL OUTPUT",
+        output_buffer
+    )
+
+    show_theory()
+
+
+def run_laplacian():
+
+    gpio.write(0x00, 0x04)
+
+    input_buffer.flush()
+
+    dma_laplacian.recvchannel.transfer(
+        output_buffer
+    )
+
+    dma_input.sendchannel.transfer(
+        input_buffer
+    )
+
+    dma_input.sendchannel.wait()
+
+    dma_laplacian.recvchannel.wait()
+
+    output_buffer.invalidate()
+
+    show_result(
+        "LAPLACIAN OUTPUT",
+        output_buffer
+    )
+
+    show_theory()
+
+
+def run_canny():
+
+    gpio.write(0x00, 0x08)
+
+    input_buffer.flush()
+
+    dma_canny.recvchannel.transfer(
+        output_buffer
+    )
+
+    dma_input.sendchannel.transfer(
+        input_buffer
+    )
+
+    dma_input.sendchannel.wait()
+
+    dma_canny.recvchannel.wait()
+
+    output_buffer.invalidate()
+
+    show_result(
+        "CANNY OUTPUT",
+        output_buffer
+    )
+
+    show_theory()
+
+
+def run_all():
+
+    run_gaussian()
+
+    run_sobel()
+
+    run_laplacian()
+
+    run_canny()
+
+
+print()
+
+print("==============================================")
+print("       FPGA IMAGE PROCESSING SYSTEM")
+print("==============================================")
+
+print("Board       : PYNQ-Z2")
+
+print("Resolution  : 256 x 256")
+
+print("Input       : RGB")
+
+print("Processing  : 8-bit Grayscale")
+
+print("Interface   : AXI4-Stream")
+
+print("Transfer    : AXI DMA")
+
+print("Control     : AXI GPIO")
+
+print("==============================================")
+
+print()
+
+print("System initialized successfully")
+
+print("==============================================")
