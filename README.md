@@ -14,7 +14,7 @@ Our system is based on the **PYNQ-Z2 development board**, which uses the Xilinx 
 
 The Processing System contains an ARM Cortex-A9 processor and runs Linux, Python and Jupyter Notebook. It handles software commands, image preparation, hardware control and result display.
 
-The Programmable Logic is the FPGA section where the image-processing operations are implemented in hardware. Therefore, our project combines software control with FPGA-based image processing.
+The Programmable Logic is the FPGA section where the image-processing operations are implemented in hardware. Therefore, our project combines software control with FPGA-based image proccesing .
 
 ### PYNQ-Z2 Development Board
 <img width="1911" height="1188" alt="image" src="https://github.com/user-attachments/assets/39a0d812-9b8c-44c3-b4f1-2db149e4f708" />
